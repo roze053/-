@@ -86,6 +86,7 @@ function startGame() {
   document.getElementById("gameOverPanel").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
   document.getElementById("similarBtn").style.display = wrongProblems.length > 0 ? "inline" : "none";
+  updateWrongProblemsPanel();
   applyCustomRange();
   generateGameQuestion();
   startTimer();
@@ -177,14 +178,9 @@ function generateAlgebraQuestion() {
   currentY = currentA * currentX + currentB;
 
   const difficulty = document.getElementById("difficulty") ? document.getElementById("difficulty").value : "easy";
-  const getFunctionString = (a, b) => {
-    if (b === 0) return `y = ${a}x`;
-    if (b > 0) return `y = ${a}x + ${b}`;
-    return `y = ${a}x - ${Math.abs(b)}`;
-  };
   if (difficulty === "easy") {
     questionType = "ab";
-    document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：${getFunctionString(currentA, currentB)}）`;
+    document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：y = 2x + 1）`;
     document.getElementById("answerInput").style.display = "none";
     document.getElementById("answerInputA").style.display = "inline";
     document.getElementById("answerInputB").style.display = "inline";
@@ -193,13 +189,13 @@ function generateAlgebraQuestion() {
     questionType = types[randInt(0, types.length - 1)];
     let questionText = "";
     if (questionType === "y") {
-      questionText = `${getFunctionString(currentA, currentB)} のとき、x = ${currentX} の y の値は？`;
+      questionText = `一次関数のとき、x = ${currentX} の y の値は？`;
       document.getElementById("answerInput").placeholder = "yの値を入力";
     } else if (questionType === "a") {
-      questionText = `x = ${currentX} のとき、y = ${currentY} となる一次関数 y = ax ${currentB === 0 ? "" : (currentB > 0 ? `+ ${currentB}` : `- ${Math.abs(currentB)}`)} の傾き a の値は？`;
+      questionText = `x = ${currentX} のとき、y = ${currentY} となる一次関数の傾き a の値は？`;
       document.getElementById("answerInput").placeholder = "傾きを入力";
     } else if (questionType === "b") {
-      questionText = `x = ${currentX} のとき、y = ${currentY} となる一次関数 y = ${currentA}x + b の切片 b の値は？`;
+      questionText = `x = ${currentX} のとき、y = ${currentY} となる一次関数の切片 b の値は？`;
       document.getElementById("answerInput").placeholder = "切片を入力";
     }
     document.getElementById("question").textContent = questionText;
@@ -215,7 +211,7 @@ function generateAlgebraQuestion() {
 
   document.getElementById("graphPanel").style.display = "block";
   document.getElementById("graphProblem").textContent =
-    `この一次関数 ${getFunctionString(currentA, currentB)} のグラフです。`;
+    `下のグラフを見て答えてください。`;
   drawAlgebraGraph(currentA, currentB);
   document.getElementById("graphAnswerResult").textContent = "";
   document.getElementById("graphCheckBtn").style.display = "none";
@@ -477,7 +473,7 @@ function generateGraphQuestion(isGameMode = false) {
   // グラフ問題：式は表示しない
   document.getElementById("question").textContent = "";
   document.getElementById("graphProblem").textContent =
-    `上のグラフから、一次関数の傾き(a)と切片(b)を答えてください。`;
+    `下のグラフを見て答えてください。`;
 
   document.getElementById("slopeInput").value = "";
   document.getElementById("interceptInput").value = "";
@@ -509,6 +505,7 @@ function checkGraphAnswer() {
 // --- 類似問題機能 ---
 function addWrongProblem(type, a, b, x, y) {
   wrongProblems.push({type, a, b, x, y});
+  updateWrongProblemsPanel();
   if (wrongProblems.length > 0) {
     document.getElementById("similarBtn").style.display = "inline";
   }
@@ -544,11 +541,10 @@ function showSimilarProblem(type, a, b, x, y) {
   };
 
   if (type === "graph") {
-    // 類似問題がグラフタイプの場合
     document.getElementById("question").textContent = "";
     document.getElementById("graphPanel").style.display = "block";
     document.getElementById("graphProblem").textContent =
-      `上のグラフから、一次関数の傾き(a)と切片(b)を答えてください。`;
+      `下のグラフを見て答えてください。`;
     drawAlgebraGraph(a, b);
     document.getElementById("slopeInput").value = "";
     document.getElementById("interceptInput").value = "";
@@ -561,40 +557,67 @@ function showSimilarProblem(type, a, b, x, y) {
     return;
   }
 
-  // algebra系
   if (type === "y") {
-    document.getElementById("question").textContent = `${getFunctionString(a, b)} のとき、x = ${x} の y の値は？`;
+    document.getElementById("question").textContent = `一次関数のとき、x = ${x} の y の値は？`;
     document.getElementById("answerInput").placeholder = "yの値を入力";
     document.getElementById("answerInput").style.display = "inline";
     document.getElementById("answerInputA").style.display = "none";
     document.getElementById("answerInputB").style.display = "none";
     document.getElementById("checkBtn").style.display = "inline";
   } else if (type === "a") {
-    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数 y = ax ${b === 0 ? "" : (b > 0 ? `+ ${b}` : `- ${Math.abs(b)}`)} の傾き a の値は？`;
+    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数の傾き a の値は？`;
     document.getElementById("answerInput").placeholder = "傾きを入力";
     document.getElementById("answerInput").style.display = "inline";
     document.getElementById("answerInputA").style.display = "none";
     document.getElementById("answerInputB").style.display = "none";
     document.getElementById("checkBtn").style.display = "inline";
   } else if (type === "b") {
-    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数 y = ${a}x + b の切片 b の値は？`;
+    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数の切片 b の値は？`;
     document.getElementById("answerInput").placeholder = "切片を入力";
     document.getElementById("answerInput").style.display = "inline";
     document.getElementById("answerInputA").style.display = "none";
     document.getElementById("answerInputB").style.display = "none";
     document.getElementById("checkBtn").style.display = "inline";
   } else if (type === "ab") {
-    document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：${getFunctionString(a, b)}）`;
+    document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：y = 2x + 1）`;
     document.getElementById("answerInput").style.display = "none";
     document.getElementById("answerInputA").style.display = "inline";
     document.getElementById("answerInputB").style.display = "inline";
     document.getElementById("checkBtn").style.display = "inline";
   }
-  // グラフも表示
   document.getElementById("graphPanel").style.display = "block";
-  document.getElementById("graphProblem").textContent = `この一次関数 ${getFunctionString(a, b)} のグラフです。`;
+  document.getElementById("graphProblem").textContent = `下のグラフを見て答えてください。`;
   drawAlgebraGraph(a, b);
   document.getElementById("graphAnswerResult").textContent = "";
   document.getElementById("graphCheckBtn").style.display = "none";
   document.getElementById("answerResult").textContent = "";
+  updateWrongProblemsPanel();
+}
+
+function updateWrongProblemsPanel() {
+  const panel = document.getElementById("similarProblemsPanel");
+  const list = document.getElementById("similarProblemsList");
+  if (wrongProblems.length === 0) {
+    panel.style.display = "none";
+    list.innerHTML = "";
+    return;
+  }
+  panel.style.display = "block";
+  let html = "";
+  wrongProblems.forEach((p, i) => {
+    if(p.type === "graph") {
+      html += `<li>グラフ類似: 傾きa=${p.a}, 切片b=${p.b}</li>`;
+    } else if(p.type === "y") {
+      html += `<li>y類似: a=${p.a}, b=${p.b}, x=${p.x}, y=${p.y}</li>`;
+    } else if(p.type === "a") {
+      html += `<li>a類似: a=${p.a}, b=${p.b}, x=${p.x}, y=${p.y}</li>`;
+    } else if(p.type === "b") {
+      html += `<li>b類似: a=${p.a}, b=${p.b}, x=${p.x}, y=${p.y}</li>`;
+    } else if(p.type === "ab") {
+      html += `<li>ab類似: a=${p.a}, b=${p.b}</li>`;
+    } else {
+      html += `<li>その他: a=${p.a}, b=${p.b}, x=${p.x}, y=${p.y}</li>`;
+    }
+  });
+  list.innerHTML = html;
 }
