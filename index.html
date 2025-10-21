@@ -57,7 +57,7 @@
       text-align: center;
       margin: 15px 0 0 0;
     }
-    #customRangePanel, #modePanel, #questionNumber, #question, #answerResult, #resultSummary, #graphPanel {
+    #customRangePanel, #modePanel, #questionNumber, #question, #answerResult, #resultSummary, #graphPanel, #similarProblemsPanel {
       max-width: 480px;
       margin: auto;
       box-sizing: border-box;
@@ -114,6 +114,27 @@
       background: #f9f9f9;
       border-radius: 4px;
     }
+    #similarProblemsPanel {
+      margin-top: 18px;
+      margin-bottom: 16px;
+      background: #fff9e5;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(255,200,0,0.08);
+      padding: 12px 8px;
+      display: none;
+    }
+    #similarProblemsPanel h2 {
+      font-size: 1.1em;
+      color: #c45a00;
+      margin: 0 0 8px 0;
+      text-align: center;
+    }
+    #similarProblemsList {
+      font-size: 1em;
+      color: #333;
+      margin: 0;
+      padding-left: 1em;
+    }
     @media (max-width: 700px) {
       #question, #customRangePanel, #graphProblem, #resultSummary, #answerResult {
         font-size: 1em;
@@ -137,11 +158,11 @@
       }
     }
     @media (max-width: 450px) {
-      #customRangePanel, #modePanel, #question, #questionNumber, #resultSummary, #answerResult, #graphPanel {
+      #customRangePanel, #modePanel, #question, #questionNumber, #resultSummary, #answerResult, #graphPanel, #similarProblemsPanel {
         padding-left: 2vw;
         padding-right: 2vw;
       }
-      #graphPanel { padding-left: 2vw; padding-right: 2vw; }
+      #graphPanel, #similarProblemsPanel { padding-left: 2vw; padding-right: 2vw; }
       canvas#graphCanvas { max-width: 100vw; }
     }
   </style>
@@ -187,6 +208,10 @@
   <button onclick="checkAnswer()" id="checkBtn" style="display:none;">答えを判定</button>
   <div id="answerResult"></div>
   <div id="resultSummary" style="font-weight:bold;color:blue;"></div>
+  <div id="similarProblemsPanel">
+    <h2>間違えた問題のリスト（類似問題のベース）</h2>
+    <ul id="similarProblemsList"></ul>
+  </div>
   <hr>
   <div id="graphPanel" style="display:none;">
     <div id="graphProblem"></div>
