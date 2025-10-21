@@ -1,7 +1,7 @@
 let currentA, currentB, currentX, currentY;
 let questionType = "y";
 let graphA, graphB, graphChart;
-let currentGameQuestionType = "algebra"; // "algebra" or "graph"
+let currentGameQuestionType = "algebra";
 
 // ゲーム用変数
 let score = 0;
@@ -12,21 +12,20 @@ let timerInterval = null;
 let gameActive = false;
 
 // 既存の連続出題モード用
-let totalQuestions = 10; // 出題数
+let totalQuestions = 10;
 let currentQuestion = 0;
 let correctCount = 0;
 let quizMode = false;
 let wrongProblems = [];
 let currentMode = "";
 
-// ユーザー定義範囲を格納
+// ユーザー定義範囲
 let customRanges = {
   aMin: 1, aMax: 3,
   bMin: -3, bMax: 3,
   xMin: 0, xMax: 5
 };
 
-// 難易度ごと範囲
 function setDifficultyRange(difficulty) {
   let range = {};
   if (difficulty === "easy") {
@@ -36,7 +35,6 @@ function setDifficultyRange(difficulty) {
   } else {
     range = { aMin: -10, aMax: 10, bMin: -10, bMax: 10, xMin: -10, xMax: 20 };
   }
-  // 入力欄に反映
   document.getElementById("aMin").value = range.aMin;
   document.getElementById("aMax").value = range.aMax;
   document.getElementById("bMin").value = range.bMin;
@@ -70,7 +68,6 @@ function onProblemTypeChange() {
   }
 }
 
-// ゲーム開始
 function startGame() {
   score = 0;
   life = 3;
@@ -84,7 +81,6 @@ function startGame() {
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("gameOverPanel").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
-  // 初回出題
   generateGameQuestion();
   startTimer();
 }
@@ -111,7 +107,7 @@ function startTimer() {
 function loseLife() {
   life--;
   document.getElementById("life").textContent = life;
-  timer = 30; // タイマーリセット
+  timer = 30;
   document.getElementById("timer").textContent = timer;
   if (life <= 0) {
     endGame();
@@ -130,10 +126,8 @@ function endGame() {
   document.getElementById("graphPanel").style.display = "none";
 }
 
-// 問題タイプに応じて出題
 function generateGameQuestion() {
   if (!gameActive) return;
-  // hide all
   document.getElementById("answerResult").textContent = "";
   document.getElementById("graphAnswerResult").textContent = "";
   document.getElementById("answerInput").style.display = "none";
@@ -155,7 +149,6 @@ function generateGameQuestion() {
   }
 }
 
-// 計算問題（既存のgenerateQuestion改名）
 function generateAlgebraQuestion() {
   if (!gameActive) return;
   const range = getRanges();
@@ -165,21 +158,18 @@ function generateAlgebraQuestion() {
   currentY = currentA * currentX + currentB;
 
   const difficulty = document.getElementById("difficulty") ? document.getElementById("difficulty").value : "easy";
-  // --- bの符号に応じて式を自動で整形 ---
   const getFunctionString = (a, b) => {
     if (b === 0) return `y = ${a}x`;
     if (b > 0) return `y = ${a}x + ${b}`;
     return `y = ${a}x - ${Math.abs(b)}`;
   };
   if (difficulty === "easy") {
-    // 必ず a,b を問う問題だけ
     questionType = "ab";
     document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：${getFunctionString(currentA, currentB)}）`;
     document.getElementById("answerInput").style.display = "none";
     document.getElementById("answerInputA").style.display = "inline";
     document.getElementById("answerInputB").style.display = "inline";
   } else {
-    // 普通・難しいはランダム
     const types = ["y", "a", "b"];
     questionType = types[randInt(0, types.length - 1)];
     let questionText = "";
@@ -203,12 +193,69 @@ function generateAlgebraQuestion() {
   document.getElementById("answerInputB").value = "";
   document.getElementById("answerResult").textContent = "";
   document.getElementById("checkBtn").style.display = "inline";
+
+  // グラフ表示
+  document.getElementById("graphPanel").style.display = "block";
+  document.getElementById("graphProblem").textContent =
+    `この一次関数 ${getFunctionString(currentA, currentB)} のグラフです。`;
+  drawAlgebraGraph(currentA, currentB);
+  document.getElementById("graphAnswerResult").textContent = "";
+  document.getElementById("graphCheckBtn").style.display = "none";
+}
+
+function drawAlgebraGraph(a, b) {
+  const range = getRanges();
+  let xValues = [];
+  let yValues = [];
+  for (let x = range.xMin; x <= range.xMax; x++) {
+    xValues.push(x);
+    yValues.push(a * x + b);
+  }
+  if (graphChart) graphChart.destroy();
+  const ctx = document.getElementById('graphCanvas').getContext('2d');
+  graphChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: xValues,
+      datasets: [{
+        label: 'y = ax + b',
+        data: yValues,
+        borderColor: 'red',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        fill: false,
+        pointRadius: 6,
+        pointBackgroundColor: 'blue',
+        borderWidth: 4,
+        tension: 0
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          display: true,
+          labels: { color: 'black', font: { size: 16 } }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'x軸', font: { size: 20 } },
+          grid: { color: 'rgba(0,0,0,0.2)' },
+          ticks: { color: 'black', font: { size: 14 } }
+        },
+        y: {
+          title: { display: true, text: 'y軸', font: { size: 20 } },
+          grid: { color: 'rgba(0,0,0,0.2)' },
+          ticks: { color: 'black', font: { size: 14 } }
+        }
+      },
+      animation: false
+    }
+  });
 }
 
 function checkAnswer() {
   if (!gameActive) return;
   if (currentGameQuestionType === "graph" && document.getElementById("graphPanel").style.display === "block") {
-    // グラフ問題の時はcheckGraphAnswerを呼ぶ
     checkGraphAnswer();
     return;
   }
@@ -272,7 +319,6 @@ function checkAnswer() {
 function levelUp() {
   level++;
   document.getElementById("level").textContent = level;
-  // 難易度を上げる（例：hardにするなど）
   if (level >= 3) {
     document.getElementById("difficulty").value = "hard";
   } else if (level === 2) {
@@ -283,7 +329,6 @@ function levelUp() {
   setDifficultyRange(document.getElementById("difficulty").value);
 }
 
-// グラフ問題
 function generateGraphQuestion(isGameMode = false) {
   const range = getRanges();
   graphA = randInt(range.aMin, range.aMax);
@@ -312,7 +357,7 @@ function generateGraphQuestion(isGameMode = false) {
         pointRadius: 6,
         pointBackgroundColor: 'blue',
         borderWidth: 4,
-        tension: 0  // 直線
+        tension: 0
       }]
     },
     options: {
@@ -345,15 +390,12 @@ function generateGraphQuestion(isGameMode = false) {
         const yZero = chart.scales.y.getPixelForValue(0);
 
         ctx.save();
-
-        // x軸（正の方向）
         ctx.beginPath();
         ctx.moveTo(xZero, yZero);
         ctx.lineTo(chartArea.right - 15, yZero);
         ctx.strokeStyle = "black";
         ctx.lineWidth = 3;
         ctx.stroke();
-        // x軸矢印ヘッド（正）
         ctx.beginPath();
         ctx.moveTo(chartArea.right - 15, yZero);
         ctx.lineTo(chartArea.right - 25, yZero - 7);
@@ -362,14 +404,12 @@ function generateGraphQuestion(isGameMode = false) {
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // x軸（負の方向）
         ctx.beginPath();
         ctx.moveTo(xZero, yZero);
         ctx.lineTo(chartArea.left + 15, yZero);
         ctx.strokeStyle = "black";
         ctx.lineWidth = 3;
         ctx.stroke();
-        // x軸矢印ヘッド（負）
         ctx.beginPath();
         ctx.moveTo(chartArea.left + 15, yZero);
         ctx.lineTo(chartArea.left + 25, yZero - 7);
@@ -378,14 +418,12 @@ function generateGraphQuestion(isGameMode = false) {
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // y軸（正の方向）
         ctx.beginPath();
         ctx.moveTo(xZero, yZero);
         ctx.lineTo(xZero, chartArea.top + 15);
         ctx.strokeStyle = "black";
         ctx.lineWidth = 3;
         ctx.stroke();
-        // y軸矢印ヘッド（正）
         ctx.beginPath();
         ctx.moveTo(xZero, chartArea.top + 15);
         ctx.lineTo(xZero - 7, chartArea.top + 25);
@@ -394,14 +432,12 @@ function generateGraphQuestion(isGameMode = false) {
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // y軸（負の方向）
         ctx.beginPath();
         ctx.moveTo(xZero, yZero);
         ctx.lineTo(xZero, chartArea.bottom - 15);
         ctx.strokeStyle = "black";
         ctx.lineWidth = 3;
         ctx.stroke();
-        // y軸矢印ヘッド（負）
         ctx.beginPath();
         ctx.moveTo(xZero, chartArea.bottom - 15);
         ctx.lineTo(xZero - 7, chartArea.bottom - 25);
@@ -415,7 +451,6 @@ function generateGraphQuestion(isGameMode = false) {
     }]
   });
 
-  // bの符号に応じて式を自動で整形
   const getFunctionString = (a, b) => {
     if (b === 0) return `y = ${a}x`;
     if (b > 0) return `y = ${a}x + ${b}`;
