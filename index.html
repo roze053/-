@@ -135,6 +135,30 @@
       margin: 0;
       padding-left: 1em;
     }
+    /* 表問題用テーブル */
+    #tablePanel {
+      margin: 12px auto 14px auto;
+      display: none;
+      max-width: 480px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 7px rgba(0,0,0,0.07);
+      padding: 10px 8px;
+    }
+    #tablePanel table {
+      margin: auto;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    #tablePanel th, #tablePanel td {
+      border: 1px solid #aaa;
+      padding: 8px 16px;
+      text-align: center;
+      font-size: 1.08em;
+    }
+    #tablePanel th {
+      background: #e6e8f7;
+    }
     @media (max-width: 700px) {
       #question, #customRangePanel, #graphProblem, #resultSummary, #answerResult {
         font-size: 1em;
@@ -156,13 +180,14 @@
         max-width: 140px;
         font-size: 1em;
       }
+      #tablePanel table, #tablePanel th, #tablePanel td { font-size: 0.98em; }
     }
     @media (max-width: 450px) {
-      #customRangePanel, #modePanel, #question, #questionNumber, #resultSummary, #answerResult, #graphPanel, #similarProblemsPanel {
+      #customRangePanel, #modePanel, #question, #questionNumber, #resultSummary, #answerResult, #graphPanel, #similarProblemsPanel, #tablePanel {
         padding-left: 2vw;
         padding-right: 2vw;
       }
-      #graphPanel, #similarProblemsPanel { padding-left: 2vw; padding-right: 2vw; }
+      #graphPanel, #similarProblemsPanel, #tablePanel { padding-left: 2vw; padding-right: 2vw; }
       canvas#graphCanvas { max-width: 100vw; }
     }
   </style>
@@ -194,6 +219,7 @@
       <select id="problemType" onchange="onProblemTypeChange()" class="big-select">
         <option value="algebra">計算問題</option>
         <option value="graph">グラフ問題</option>
+        <option value="table">表問題</option>
         <option value="mix">ランダム</option>
       </select>
     </label>
@@ -212,12 +238,19 @@
     <h2>間違えた問題のリスト（類似問題のベース）</h2>
     <ul id="similarProblemsList"></ul>
   </div>
+  <div id="tablePanel" style="display:none;">
+    <div id="tableProblem"></div>
+    <div id="tableArea"></div>
+    <label>空欄のyの値 <input type="number" id="tableAnswerInput" placeholder="yの値"></label>
+    <button onclick="checkTableAnswer()" id="tableCheckBtn" style="display:none;">答えを判定</button>
+    <div id="tableAnswerResult"></div>
+  </div>
   <hr>
   <div id="graphPanel" style="display:none;">
     <div id="graphProblem"></div>
     <canvas id="graphCanvas" width="400" height="300"></canvas>
-    <label>傾き(a) <input type="number" id="slopeInput" placeholder="傾きを入力"></label>
-    <label>切片(b) <input type="number" id="interceptInput" placeholder="切片を入力"></label>
+    <label id="slopeLabel">傾き(a) <input type="number" id="slopeInput" placeholder="傾きを入力"></label>
+    <label id="interceptLabel">切片(b) <input type="number" id="interceptInput" placeholder="切片を入力"></label>
     <button onclick="checkGraphAnswer()" id="graphCheckBtn" style="display:none;">答えを判定</button>
     <div id="graphAnswerResult"></div>
   </div>
