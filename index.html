@@ -20,43 +20,24 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 12px;
-      font-size: 1.1em;
+      font-size: 1.15em;
       margin-bottom: 10px;
     }
-    #customRangePanel, #modePanel, #questionNumber, #question, #answerResult, #resultSummary, #graphPanel {
-      max-width: 480px;
-      margin: auto;
-      box-sizing: border-box;
-      padding: 0 8px;
+    .big-select,
+    .big-button {
+      font-size: 1.3em;
+      padding: 12px 24px;
+      margin: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #3578e5;
+      box-shadow: 0 2px 6px rgba(0,0,32,0.09);
+      background: #fff;
+      transition: box-shadow 0.15s;
     }
-    #customRangePanel {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 12px;
-      align-items: center;
-      font-size: 0.98em;
-      margin-bottom: 8px;
-      justify-content: center;
-    }
-    #question {
-      font-size: 1.13em;
-      margin: 22px 0 8px 0;
-      white-space: pre-line;
-    }
-    #questionNumber {
-      font-size: 1.06em;
-      color: #446;
-      margin: 10px 0 0 0;
-    }
-    input[type="number"] {
-      width: 80px;
-      max-width: 36vw;
-      font-size: 1em;
-      padding: 4px;
-      margin: 0 2px 3px 0;
-      box-sizing: border-box;
-      border: 1px solid #bbb;
-      border-radius: 4px;
+    .big-select:focus,
+    .big-button:active {
+      box-shadow: 0 2px 12px rgba(53,120,229,0.25);
+      outline: none;
     }
     button {
       font-size: 1em;
@@ -76,6 +57,41 @@
       text-align: center;
       margin: 15px 0 0 0;
     }
+    #customRangePanel, #modePanel, #questionNumber, #question, #answerResult, #resultSummary, #graphPanel {
+      max-width: 480px;
+      margin: auto;
+      box-sizing: border-box;
+      padding: 0 8px;
+    }
+    #customRangePanel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      align-items: center;
+      font-size: 1.08em;
+      margin-bottom: 8px;
+      justify-content: center;
+    }
+    #question {
+      font-size: 1.19em;
+      margin: 22px 0 8px 0;
+      white-space: pre-line;
+    }
+    #questionNumber {
+      font-size: 1.09em;
+      color: #446;
+      margin: 10px 0 0 0;
+    }
+    input[type="number"] {
+      width: 80px;
+      max-width: 36vw;
+      font-size: 1.08em;
+      padding: 4px;
+      margin: 0 2px 3px 0;
+      box-sizing: border-box;
+      border: 1px solid #bbb;
+      border-radius: 4px;
+    }
     #graphPanel {
       margin-top: 10px;
       margin-bottom: 20px;
@@ -85,7 +101,7 @@
       padding: 14px 4px 10px 4px;
     }
     #graphProblem {
-      font-size: 1.06em;
+      font-size: 1.09em;
       margin-bottom: 6px;
       text-align: center;
     }
@@ -101,12 +117,18 @@
       #question, #customRangePanel, #graphProblem, #resultSummary, #answerResult {
         font-size: 1em;
       }
-      #gameStats { font-size: 0.97em; }
+      #gameStats { font-size: 1em; }
       #customRangePanel {
         flex-direction: column;
         align-items: flex-start;
       }
-      button { font-size: 0.98em; }
+      button, .big-button {
+        font-size: 1.15em;
+        padding: 10px 18px;
+      }
+      .big-select {
+        font-size: 1.15em;
+      }
       input[type="number"] {
         width: 60vw;
         max-width: 140px;
@@ -125,34 +147,33 @@
 </head>
 <body>
   <h1>一次関数ゲーム</h1>
-  <div id="gameStats" style="margin-bottom:10px; font-weight:bold;">
+  <div id="gameStats">
     スコア: <span id="score">0</span>　
     ライフ: <span id="life">3</span>　
     レベル: <span id="level">1</span>　
     タイム: <span id="timer">30</span>秒
   </div>
-  <button onclick="startGame()" id="startBtn">ゲーム開始</button>
-  <button onclick="retryGame()" id="retryBtn" style="display:none;">リトライ</button>
+  <button onclick="startGame()" id="startBtn" class="big-button">ゲーム開始</button>
+  <button onclick="retryGame()" id="retryBtn" class="big-button" style="display:none;">リトライ</button>
   <div id="gameOverPanel" style="display:none; color:red; font-size:1.2em;">ゲームオーバー！</div>
 
-  <!-- 難易度と範囲自由設定 -->
-  <div id="customRangePanel" style="margin:10px 0;">
+  <div id="customRangePanel">
     <label>a最小: <input type="number" id="aMin" value="1"></label>
     <label>a最大: <input type="number" id="aMax" value="3"></label>
     <label>b最小: <input type="number" id="bMin" value="-3"></label>
     <label>b最大: <input type="number" id="bMax" value="3"></label>
     <label>x最小: <input type="number" id="xMin" value="0"></label>
     <label>x最大: <input type="number" id="xMax" value="5"></label>
-    <button onclick="applyCustomRange()">範囲を適用</button>
+    <button onclick="applyCustomRange()" class="big-button">範囲を適用</button>
     <label>難易度:
-      <select id="difficulty" onchange="setDifficultyRange(this.value)">
+      <select id="difficulty" onchange="setDifficultyRange(this.value)" class="big-select">
         <option value="easy">簡単</option>
         <option value="normal">普通</option>
         <option value="hard">難しい</option>
       </select>
     </label>
     <label style="margin-left:16px;">問題タイプ:
-      <select id="problemType" onchange="onProblemTypeChange()">
+      <select id="problemType" onchange="onProblemTypeChange()" class="big-select">
         <option value="algebra">計算問題</option>
         <option value="graph">グラフ問題</option>
         <option value="mix">ランダム</option>
