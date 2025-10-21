@@ -3,7 +3,6 @@ let questionType = "y";
 let graphA, graphB, graphChart;
 let currentGameQuestionType = "algebra";
 
-// ゲーム用変数
 let score = 0;
 let life = 3;
 let level = 1;
@@ -11,53 +10,28 @@ let timer = 30;
 let timerInterval = null;
 let gameActive = false;
 
-let totalQuestions = 10; // 問題数。UIで設定
+let totalQuestions = 10;
 let currentQuestion = 0;
 let correctCount = 0;
-let quizMode = false;
-let wrongProblems = [];
-let currentMode = "";
 
-// ユーザー定義範囲
-let customRanges = {
-  aMin: 1, aMax: 3,
-  bMin: -3, bMax: 3,
-  xMin: 0, xMax: 5
-};
-
+// 難易度ごとの自動範囲
 function setDifficultyRange(difficulty) {
-  let range = {};
   if (difficulty === "easy") {
-    range = { aMin: 1, aMax: 3, bMin: -3, bMax: 3, xMin: 0, xMax: 5 };
+    window.autoRange = { aMin: 1, aMax: 3, bMin: -3, bMax: 3, xMin: 0, xMax: 5 };
   } else if (difficulty === "normal") {
-    range = { aMin: -5, aMax: 5, bMin: -5, bMax: 5, xMin: -5, xMax: 10 };
+    window.autoRange = { aMin: -5, aMax: 5, bMin: -5, bMax: 5, xMin: -5, xMax: 10 };
   } else {
-    range = { aMin: -10, aMax: 10, bMin: -10, bMax: 10, xMin: -10, xMax: 20 };
+    window.autoRange = { aMin: -10, aMax: 10, bMin: -10, bMax: 10, xMin: -10, xMax: 20 };
   }
-  document.getElementById("aMin").value = range.aMin;
-  document.getElementById("aMax").value = range.aMax;
-  document.getElementById("bMin").value = range.bMin;
-  document.getElementById("bMax").value = range.bMax;
-  document.getElementById("xMin").value = range.xMin;
-  document.getElementById("xMax").value = range.xMax;
-  customRanges = { ...range };
 }
 
 function applyCustomRange() {
-  customRanges.aMin = Number(document.getElementById("aMin").value);
-  customRanges.aMax = Number(document.getElementById("aMax").value);
-  customRanges.bMin = Number(document.getElementById("bMin").value);
-  customRanges.bMax = Number(document.getElementById("bMax").value);
-  customRanges.xMin = Number(document.getElementById("xMin").value);
-  customRanges.xMax = Number(document.getElementById("xMax").value);
-
-  // 問題数も反映
   let tq = Number(document.getElementById("totalQuestionsInput").value);
   if (tq >= 1) totalQuestions = tq;
 }
 
 function getRanges() {
-  return customRanges;
+  return window.autoRange;
 }
 
 function randInt(min, max) {
@@ -86,7 +60,8 @@ function startGame() {
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("gameOverPanel").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
-  applyCustomRange(); // 最新の問題数等を反映
+  setDifficultyRange(document.getElementById("difficulty").value); // 難易度で児童設定
+  applyCustomRange();
   generateGameQuestion();
   startTimer();
 }
@@ -137,7 +112,6 @@ function endGame() {
 
 function generateGameQuestion() {
   if (!gameActive) return;
-  // 問題数制御
   if (currentQuestion >= totalQuestions) {
     endGame();
     return;
@@ -164,7 +138,7 @@ function generateGameQuestion() {
   if (type === "algebra") {
     generateAlgebraQuestion();
   } else if (type === "graph") {
-    document.getElementById("graphPanel").style.display = "block"; // ←必ず表示
+    document.getElementById("graphPanel").style.display = "block";
     generateGraphQuestion(true);
   }
 }
@@ -351,7 +325,7 @@ function levelUp() {
 }
 
 function generateGraphQuestion(isGameMode = false) {
-  document.getElementById("graphPanel").style.display = "block"; // 必ず表示
+  document.getElementById("graphPanel").style.display = "block";
   const range = getRanges();
   graphA = randInt(range.aMin, range.aMax);
   if (graphA === 0) graphA = 1;
