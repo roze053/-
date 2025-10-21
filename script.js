@@ -164,6 +164,7 @@ function generateGameQuestion() {
   if (type === "algebra") {
     generateAlgebraQuestion();
   } else if (type === "graph") {
+    document.getElementById("graphPanel").style.display = "block"; // ←必ず表示
     generateGraphQuestion(true);
   }
 }
@@ -350,6 +351,7 @@ function levelUp() {
 }
 
 function generateGraphQuestion(isGameMode = false) {
+  document.getElementById("graphPanel").style.display = "block"; // 必ず表示
   const range = getRanges();
   graphA = randInt(range.aMin, range.aMax);
   if (graphA === 0) graphA = 1;
