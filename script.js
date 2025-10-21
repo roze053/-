@@ -30,9 +30,9 @@ function getTimeLimitByDifficulty(difficulty) {
   if (difficulty === "easy") {
     return 45;
   } else if (difficulty === "normal") {
-    return 30;
+    return 60; // 普通：60秒
   } else {
-    return 20;
+    return 40; // 難しい：40秒
   }
 }
 
@@ -64,7 +64,7 @@ function randInt(min, max) {
 
 function onProblemTypeChange() {
   const val = document.getElementById("problemType").value;
-  if (val === "algebra" || val === "graph" || val === "mix") {
+  if (val === "algebra" || val === "graph" || val === "table" || val === "mix") {
     currentGameQuestionType = val;
   }
 }
@@ -131,6 +131,7 @@ function endGame() {
   document.getElementById("checkBtn").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
   document.getElementById("graphPanel").style.display = "none";
+  document.getElementById("tablePanel").style.display = "none";
   document.getElementById("questionNumber").textContent = "";
   document.getElementById("resultSummary").textContent =
     `終了！正解数: ${correctCount} / ${totalQuestions}（正答率: ${Math.round((correctCount/totalQuestions)*100)}%）`;
@@ -146,6 +147,7 @@ function generateGameQuestion() {
   currentQuestion++;
   document.getElementById("questionNumber").textContent = `【第${currentQuestion}問 / 全${totalQuestions}問】`;
 
+  // hide all answer UI
   document.getElementById("answerResult").textContent = "";
   document.getElementById("graphAnswerResult").textContent = "";
   document.getElementById("answerInput").style.display = "none";
@@ -154,11 +156,15 @@ function generateGameQuestion() {
   document.getElementById("checkBtn").style.display = "none";
   document.getElementById("graphPanel").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
+  document.getElementById("tablePanel").style.display = "none";
+  document.getElementById("tableCheckBtn").style.display = "none";
   document.getElementById("resultSummary").textContent = "";
 
   let type = currentGameQuestionType;
   if (type === "mix") {
-    type = randInt(0, 1) === 0 ? "algebra" : "graph";
+    // algebra / graph / table ランダム
+    const arr = ["algebra", "graph", "table"];
+    type = arr[randInt(0, arr.length - 1)];
   }
 
   if (type === "algebra") {
@@ -166,6 +172,8 @@ function generateGameQuestion() {
   } else if (type === "graph") {
     document.getElementById("graphPanel").style.display = "block";
     generateGraphQuestion(true);
+  } else if (type === "table") {
+    generateTableQuestion();
   }
 }
 
@@ -209,12 +217,85 @@ function generateAlgebraQuestion() {
   document.getElementById("answerResult").textContent = "";
   document.getElementById("checkBtn").style.display = "inline";
 
+  // hide graph answer UI for non-graph mode
   document.getElementById("graphPanel").style.display = "block";
   document.getElementById("graphProblem").textContent =
     `下のグラフを見て答えてください。`;
   drawAlgebraGraph(currentA, currentB);
-  document.getElementById("graphAnswerResult").textContent = "";
+  document.getElementById("slopeLabel").style.display = "none";
+  document.getElementById("interceptLabel").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
+  document.getElementById("graphAnswerResult").textContent = "";
+}
+
+function generateTableQuestion() {
+  // 問題: x,y の値の組を表にして、y=? の空欄を1つ作る。空欄を埋めさせる
+  const range = getRanges();
+  currentA = randInt(range.aMin, range.aMax);
+  currentB = randInt(range.bMin, range.bMax);
+
+  // x値3つ
+  let xVals = [];
+  while (xVals.length < 3) {
+    let x = randInt(range.xMin, range.xMax);
+    if (!xVals.includes(x)) xVals.push(x);
+  }
+  xVals.sort((a, b) => a - b);
+
+  // 空欄にするindex
+  let blankIdx = randInt(0, 2);
+  let yVals = xVals.map((x, i) => i === blankIdx ? null : currentA * x + currentB);
+  let answerY = currentA * xVals[blankIdx] + currentB;
+
+  // 表生成
+  let tableHtml = `<table><tr><th>x</th>`;
+  xVals.forEach(x => tableHtml += `<td>${x}</td>`);
+  tableHtml += `</tr><tr><th>y</th>`;
+  yVals.forEach((y, i) => {
+    if (i === blankIdx) tableHtml += `<td><b>？</b></td>`;
+    else tableHtml += `<td>${y}</td>`;
+  });
+  tableHtml += "</tr></table>";
+
+  document.getElementById("question").textContent = `次の表の「？」に入るyの値を答えてください。`;
+  document.getElementById("tableArea").innerHTML = tableHtml;
+  document.getElementById("tablePanel").style.display = "block";
+  document.getElementById("tableProblem").textContent = "";
+  document.getElementById("tableAnswerInput").value = "";
+  document.getElementById("tableAnswerResult").textContent = "";
+  document.getElementById("tableCheckBtn").style.display = "inline";
+  // 使い回し用
+  document.getElementById("tableCheckBtn").onclick = () => {
+    checkTableAnswer(answerY);
+  }
+
+  // hide graph answer UI for non-graph mode
+  document.getElementById("graphPanel").style.display = "block";
+  document.getElementById("graphProblem").textContent = `下のグラフを見て答えてください。`;
+  drawAlgebraGraph(currentA, currentB);
+  document.getElementById("slopeLabel").style.display = "none";
+  document.getElementById("interceptLabel").style.display = "none";
+  document.getElementById("graphCheckBtn").style.display = "none";
+  document.getElementById("graphAnswerResult").textContent = "";
+}
+
+function checkTableAnswer(ansY) {
+  const userY = Number(document.getElementById("tableAnswerInput").value);
+  const resultDiv = document.getElementById("tableAnswerResult");
+  if (userY === ansY) {
+    resultDiv.textContent = "正解！ +10点";
+    resultDiv.style.color = "green";
+    score += 10;
+    correctCount++;
+    document.getElementById("score").textContent = score;
+    if (score % 50 === 0) levelUp();
+    setTimeout(generateGameQuestion, 1000);
+  } else {
+    resultDiv.textContent = `不正解… 正しい答えは ${ansY} です。 -1ライフ`;
+    resultDiv.style.color = "red";
+    addWrongProblem("table", currentA, currentB, null, ansY);
+    loseLife();
+  }
 }
 
 function drawAlgebraGraph(a, b) {
@@ -271,6 +352,10 @@ function checkAnswer() {
   if (!gameActive) return;
   if (currentGameQuestionType === "graph" && document.getElementById("graphPanel").style.display === "block") {
     checkGraphAnswer();
+    return;
+  }
+  if (currentGameQuestionType === "table") {
+    // 表問題は専用のanswer欄で判定
     return;
   }
   const difficulty = document.getElementById("difficulty") ? document.getElementById("difficulty").value : "easy";
@@ -349,6 +434,8 @@ function levelUp() {
 
 function generateGraphQuestion(isGameMode = false) {
   document.getElementById("graphPanel").style.display = "block";
+  document.getElementById("slopeLabel").style.display = "inline";
+  document.getElementById("interceptLabel").style.display = "inline";
   const range = getRanges();
   graphA = randInt(range.aMin, range.aMax);
   if (graphA === 0) graphA = 1;
@@ -515,7 +602,6 @@ function challengeSimilarProblem() {
   if (wrongProblems.length === 0) return;
   const base = wrongProblems[Math.floor(Math.random() * wrongProblems.length)];
   const range = getRanges();
-  // type: algebra/graph/ab/y/a/b
   let a = clamp(base.a + randInt(-1, 1), range.aMin, range.aMax);
   let b = clamp(base.b + randInt(-1, 1), range.bMin, range.bMax);
   let x = typeof base.x === "number" ? clamp(base.x + randInt(-1, 1), range.xMin, range.xMax) : randInt(range.xMin, range.xMax);
@@ -540,9 +626,57 @@ function showSimilarProblem(type, a, b, x, y) {
     return `y = ${a}x - ${Math.abs(b)}`;
   };
 
+  // --- 表問題 ---
+  if (type === "table") {
+    // 類似表問題
+    let xVals = [];
+    while (xVals.length < 3) {
+      let xx = randInt(getRanges().xMin, getRanges().xMax);
+      if (!xVals.includes(xx)) xVals.push(xx);
+    }
+    xVals.sort((a, b) => a - b);
+    let blankIdx = randInt(0, 2);
+    let yVals = xVals.map((xv, i) => i === blankIdx ? null : a * xv + b);
+    let answerY = a * xVals[blankIdx] + b;
+    let tableHtml = `<table><tr><th>x</th>`;
+    xVals.forEach(xv => tableHtml += `<td>${xv}</td>`);
+    tableHtml += `</tr><tr><th>y</th>`;
+    yVals.forEach((yv, i) => {
+      if (i === blankIdx) tableHtml += `<td><b>？</b></td>`;
+      else tableHtml += `<td>${yv}</td>`;
+    });
+    tableHtml += "</tr></table>";
+
+    document.getElementById("question").textContent = `次の表の「？」に入るyの値を答えてください。`;
+    document.getElementById("tableArea").innerHTML = tableHtml;
+    document.getElementById("tablePanel").style.display = "block";
+    document.getElementById("tableProblem").textContent = "";
+    document.getElementById("tableAnswerInput").value = "";
+    document.getElementById("tableAnswerResult").textContent = "";
+    document.getElementById("tableCheckBtn").style.display = "inline";
+    document.getElementById("tableCheckBtn").onclick = () => {
+      checkTableAnswer(answerY);
+    }
+    document.getElementById("graphPanel").style.display = "block";
+    document.getElementById("graphProblem").textContent = `下のグラフを見て答えてください。`;
+    drawAlgebraGraph(a, b);
+    document.getElementById("slopeLabel").style.display = "none";
+    document.getElementById("interceptLabel").style.display = "none";
+    document.getElementById("graphCheckBtn").style.display = "none";
+    document.getElementById("graphAnswerResult").textContent = "";
+    document.getElementById("answerInput").style.display = "none";
+    document.getElementById("answerInputA").style.display = "none";
+    document.getElementById("answerInputB").style.display = "none";
+    document.getElementById("checkBtn").style.display = "none";
+    return;
+  }
+
+  // --- グラフ問題 ---
   if (type === "graph") {
     document.getElementById("question").textContent = "";
     document.getElementById("graphPanel").style.display = "block";
+    document.getElementById("slopeLabel").style.display = "inline";
+    document.getElementById("interceptLabel").style.display = "inline";
     document.getElementById("graphProblem").textContent =
       `下のグラフを見て答えてください。`;
     drawAlgebraGraph(a, b);
@@ -554,9 +688,11 @@ function showSimilarProblem(type, a, b, x, y) {
     document.getElementById("answerInputA").style.display = "none";
     document.getElementById("answerInputB").style.display = "none";
     document.getElementById("checkBtn").style.display = "none";
+    document.getElementById("tablePanel").style.display = "none";
     return;
   }
 
+  // --- algebra系 ---
   if (type === "y") {
     document.getElementById("question").textContent = `一次関数のとき、x = ${x} の y の値は？`;
     document.getElementById("answerInput").placeholder = "yの値を入力";
@@ -588,10 +724,11 @@ function showSimilarProblem(type, a, b, x, y) {
   document.getElementById("graphPanel").style.display = "block";
   document.getElementById("graphProblem").textContent = `下のグラフを見て答えてください。`;
   drawAlgebraGraph(a, b);
-  document.getElementById("graphAnswerResult").textContent = "";
+  document.getElementById("slopeLabel").style.display = "none";
+  document.getElementById("interceptLabel").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
   document.getElementById("answerResult").textContent = "";
-  updateWrongProblemsPanel();
+  document.getElementById("tablePanel").style.display = "none";
 }
 
 function updateWrongProblemsPanel() {
@@ -607,6 +744,8 @@ function updateWrongProblemsPanel() {
   wrongProblems.forEach((p, i) => {
     if(p.type === "graph") {
       html += `<li>グラフ類似: 傾きa=${p.a}, 切片b=${p.b}</li>`;
+    } else if(p.type === "table") {
+      html += `<li>表類似: a=${p.a}, b=${p.b}, 答y=${p.y}</li>`;
     } else if(p.type === "y") {
       html += `<li>y類似: a=${p.a}, b=${p.b}, x=${p.x}, y=${p.y}</li>`;
     } else if(p.type === "a") {
