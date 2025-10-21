@@ -14,8 +14,30 @@ let totalQuestions = 10;
 let currentQuestion = 0;
 let correctCount = 0;
 
-// 難易度ごとの自動範囲
+let wrongProblems = [];
+
+// 難易度ごとのライフと時間上限
+function getLifeLimitByDifficulty(difficulty) {
+  if (difficulty === "easy") {
+    return 5;
+  } else if (difficulty === "normal") {
+    return 4;
+  } else {
+    return 3;
+  }
+}
+function getTimeLimitByDifficulty(difficulty) {
+  if (difficulty === "easy") {
+    return 45;
+  } else if (difficulty === "normal") {
+    return 30;
+  } else {
+    return 20;
+  }
+}
+
 function setDifficultyRange(difficulty) {
+  // 難易度ごとの自動範囲
   if (difficulty === "easy") {
     window.autoRange = { aMin: 1, aMax: 3, bMin: -3, bMax: 3, xMin: 0, xMax: 5 };
   } else if (difficulty === "normal") {
@@ -23,6 +45,8 @@ function setDifficultyRange(difficulty) {
   } else {
     window.autoRange = { aMin: -10, aMax: 10, bMin: -10, bMax: 10, xMin: -10, xMax: 20 };
   }
+  window.lifeLimit = getLifeLimitByDifficulty(difficulty);
+  window.timeLimit = getTimeLimitByDifficulty(difficulty);
 }
 
 function applyCustomRange() {
@@ -47,12 +71,13 @@ function onProblemTypeChange() {
 
 function startGame() {
   score = 0;
-  life = 3;
   level = 1;
-  timer = 30;
   gameActive = true;
   currentQuestion = 0;
   correctCount = 0;
+  setDifficultyRange(document.getElementById("difficulty").value);
+  life = window.lifeLimit;
+  timer = window.timeLimit;
   document.getElementById("score").textContent = score;
   document.getElementById("life").textContent = life;
   document.getElementById("level").textContent = level;
@@ -60,7 +85,7 @@ function startGame() {
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("gameOverPanel").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
-  setDifficultyRange(document.getElementById("difficulty").value); // 難易度で児童設定
+  document.getElementById("similarBtn").style.display = wrongProblems.length > 0 ? "inline" : "none";
   applyCustomRange();
   generateGameQuestion();
   startTimer();
@@ -88,7 +113,7 @@ function startTimer() {
 function loseLife() {
   life--;
   document.getElementById("life").textContent = life;
-  timer = 30;
+  timer = window.timeLimit;
   document.getElementById("timer").textContent = timer;
   if (life <= 0) {
     endGame();
@@ -270,6 +295,7 @@ function checkAnswer() {
     } else {
       resultDiv.textContent = `不正解… 正しい答えは a=${currentA}、b=${currentB} です。 -1ライフ`;
       resultDiv.style.color = "red";
+      addWrongProblem(questionType, currentA, currentB, currentX, currentY);
       loseLife();
       return;
     }
@@ -300,12 +326,13 @@ function checkAnswer() {
     } else {
       resultDiv.textContent = `不正解… 正しい答えは ${ansLabel} = ${correctAns} です。 -1ライフ`;
       resultDiv.style.color = "red";
+      addWrongProblem(questionType, currentA, currentB, currentX, currentY);
       loseLife();
       return;
     }
   }
   if (gameActive) {
-    timer = 30;
+    timer = window.timeLimit;
     document.getElementById("timer").textContent = timer;
     setTimeout(generateGameQuestion, 1000);
   }
@@ -447,15 +474,10 @@ function generateGraphQuestion(isGameMode = false) {
     }]
   });
 
-  const getFunctionString = (a, b) => {
-    if (b === 0) return `y = ${a}x`;
-    if (b > 0) return `y = ${a}x + ${b}`;
-    return `y = ${a}x - ${Math.abs(b)}`;
-  };
+  // グラフ問題：式は表示しない
   document.getElementById("question").textContent = "";
-  document.getElementById("graphPanel").style.display = "block";
   document.getElementById("graphProblem").textContent =
-    `上のグラフの一次関数：${getFunctionString(graphA, graphB)} の傾き(a)と切片(b)を答えてください。`;
+    `上のグラフから、一次関数の傾き(a)と切片(b)を答えてください。`;
 
   document.getElementById("slopeInput").value = "";
   document.getElementById("interceptInput").value = "";
@@ -473,12 +495,106 @@ function checkGraphAnswer() {
     score += 10;
     document.getElementById("score").textContent = score;
     if (score % 50 === 0) levelUp();
-    timer = 30;
+    timer = window.timeLimit;
     document.getElementById("timer").textContent = timer;
     setTimeout(generateGameQuestion, 1000);
   } else {
     resultDiv.textContent = `不正解… 正しい答えは 傾き(a)=${graphA}、切片(b)=${graphB} です。 -1ライフ`;
     resultDiv.style.color = "red";
+    addWrongProblem("graph", graphA, graphB, null, null);
     loseLife();
   }
+}
+
+// --- 類似問題機能 ---
+function addWrongProblem(type, a, b, x, y) {
+  wrongProblems.push({type, a, b, x, y});
+  if (wrongProblems.length > 0) {
+    document.getElementById("similarBtn").style.display = "inline";
+  }
+}
+
+function challengeSimilarProblem() {
+  if (wrongProblems.length === 0) return;
+  const base = wrongProblems[Math.floor(Math.random() * wrongProblems.length)];
+  const range = getRanges();
+  // type: algebra/graph/ab/y/a/b
+  let a = clamp(base.a + randInt(-1, 1), range.aMin, range.aMax);
+  let b = clamp(base.b + randInt(-1, 1), range.bMin, range.bMax);
+  let x = typeof base.x === "number" ? clamp(base.x + randInt(-1, 1), range.xMin, range.xMax) : randInt(range.xMin, range.xMax);
+  let y = a * x + b;
+  let type = base.type;
+
+  showSimilarProblem(type, a, b, x, y);
+}
+function clamp(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+}
+function showSimilarProblem(type, a, b, x, y) {
+  currentA = a;
+  currentB = b;
+  currentX = x;
+  currentY = y;
+  questionType = type;
+
+  const getFunctionString = (a, b) => {
+    if (b === 0) return `y = ${a}x`;
+    if (b > 0) return `y = ${a}x + ${b}`;
+    return `y = ${a}x - ${Math.abs(b)}`;
+  };
+
+  if (type === "graph") {
+    // 類似問題がグラフタイプの場合
+    document.getElementById("question").textContent = "";
+    document.getElementById("graphPanel").style.display = "block";
+    document.getElementById("graphProblem").textContent =
+      `上のグラフから、一次関数の傾き(a)と切片(b)を答えてください。`;
+    drawAlgebraGraph(a, b);
+    document.getElementById("slopeInput").value = "";
+    document.getElementById("interceptInput").value = "";
+    document.getElementById("graphAnswerResult").textContent = "";
+    document.getElementById("graphCheckBtn").style.display = "inline";
+    document.getElementById("answerInput").style.display = "none";
+    document.getElementById("answerInputA").style.display = "none";
+    document.getElementById("answerInputB").style.display = "none";
+    document.getElementById("checkBtn").style.display = "none";
+    return;
+  }
+
+  // algebra系
+  if (type === "y") {
+    document.getElementById("question").textContent = `${getFunctionString(a, b)} のとき、x = ${x} の y の値は？`;
+    document.getElementById("answerInput").placeholder = "yの値を入力";
+    document.getElementById("answerInput").style.display = "inline";
+    document.getElementById("answerInputA").style.display = "none";
+    document.getElementById("answerInputB").style.display = "none";
+    document.getElementById("checkBtn").style.display = "inline";
+  } else if (type === "a") {
+    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数 y = ax ${b === 0 ? "" : (b > 0 ? `+ ${b}` : `- ${Math.abs(b)}`)} の傾き a の値は？`;
+    document.getElementById("answerInput").placeholder = "傾きを入力";
+    document.getElementById("answerInput").style.display = "inline";
+    document.getElementById("answerInputA").style.display = "none";
+    document.getElementById("answerInputB").style.display = "none";
+    document.getElementById("checkBtn").style.display = "inline";
+  } else if (type === "b") {
+    document.getElementById("question").textContent = `x = ${x} のとき、y = ${y} となる一次関数 y = ${a}x + b の切片 b の値は？`;
+    document.getElementById("answerInput").placeholder = "切片を入力";
+    document.getElementById("answerInput").style.display = "inline";
+    document.getElementById("answerInputA").style.display = "none";
+    document.getElementById("answerInputB").style.display = "none";
+    document.getElementById("checkBtn").style.display = "inline";
+  } else if (type === "ab") {
+    document.getElementById("question").textContent = `一次関数の式「y = ax + b」のa（傾き）とb（切片）を答えてください。\n（例：${getFunctionString(a, b)}）`;
+    document.getElementById("answerInput").style.display = "none";
+    document.getElementById("answerInputA").style.display = "inline";
+    document.getElementById("answerInputB").style.display = "inline";
+    document.getElementById("checkBtn").style.display = "inline";
+  }
+  // グラフも表示
+  document.getElementById("graphPanel").style.display = "block";
+  document.getElementById("graphProblem").textContent = `この一次関数 ${getFunctionString(a, b)} のグラフです。`;
+  drawAlgebraGraph(a, b);
+  document.getElementById("graphAnswerResult").textContent = "";
+  document.getElementById("graphCheckBtn").style.display = "none";
+  document.getElementById("answerResult").textContent = "";
 }
