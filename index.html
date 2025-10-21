@@ -159,14 +159,8 @@
   <div id="gameOverPanel" style="display:none; color:red; font-size:1.2em;">ゲームオーバー！</div>
 
   <div id="customRangePanel">
-    <label>a最小: <input type="number" id="aMin" value="1"></label>
-    <label>a最大: <input type="number" id="aMax" value="3"></label>
-    <label>b最小: <input type="number" id="bMin" value="-3"></label>
-    <label>b最大: <input type="number" id="bMax" value="3"></label>
-    <label>x最小: <input type="number" id="xMin" value="0"></label>
-    <label>x最大: <input type="number" id="xMax" value="5"></label>
     <label>問題数: <input type="number" id="totalQuestionsInput" value="10" min="1" style="width:70px; font-size:1.08em;"></label>
-    <button onclick="applyCustomRange()" class="big-button">範囲を適用</button>
+    <button onclick="applyCustomRange()" class="big-button">問題数を適用</button>
     <label>難易度:
       <select id="difficulty" onchange="setDifficultyRange(this.value)" class="big-select">
         <option value="easy">簡単</option>
