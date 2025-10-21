@@ -11,8 +11,7 @@ let timer = 30;
 let timerInterval = null;
 let gameActive = false;
 
-// 既存の連続出題モード用
-let totalQuestions = 10;
+let totalQuestions = 10; // 問題数。UIで設定
 let currentQuestion = 0;
 let correctCount = 0;
 let quizMode = false;
@@ -51,6 +50,10 @@ function applyCustomRange() {
   customRanges.bMax = Number(document.getElementById("bMax").value);
   customRanges.xMin = Number(document.getElementById("xMin").value);
   customRanges.xMax = Number(document.getElementById("xMax").value);
+
+  // 問題数も反映
+  let tq = Number(document.getElementById("totalQuestionsInput").value);
+  if (tq >= 1) totalQuestions = tq;
 }
 
 function getRanges() {
@@ -74,6 +77,8 @@ function startGame() {
   level = 1;
   timer = 30;
   gameActive = true;
+  currentQuestion = 0;
+  correctCount = 0;
   document.getElementById("score").textContent = score;
   document.getElementById("life").textContent = life;
   document.getElementById("level").textContent = level;
@@ -81,6 +86,7 @@ function startGame() {
   document.getElementById("startBtn").style.display = "none";
   document.getElementById("gameOverPanel").style.display = "none";
   document.getElementById("retryBtn").style.display = "none";
+  applyCustomRange(); // 最新の問題数等を反映
   generateGameQuestion();
   startTimer();
 }
@@ -124,10 +130,22 @@ function endGame() {
   document.getElementById("checkBtn").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
   document.getElementById("graphPanel").style.display = "none";
+  document.getElementById("questionNumber").textContent = "";
+  document.getElementById("resultSummary").textContent =
+    `終了！正解数: ${correctCount} / ${totalQuestions}（正答率: ${Math.round((correctCount/totalQuestions)*100)}%）`;
 }
 
 function generateGameQuestion() {
   if (!gameActive) return;
+  // 問題数制御
+  if (currentQuestion >= totalQuestions) {
+    endGame();
+    return;
+  }
+
+  currentQuestion++;
+  document.getElementById("questionNumber").textContent = `【第${currentQuestion}問 / 全${totalQuestions}問】`;
+
   document.getElementById("answerResult").textContent = "";
   document.getElementById("graphAnswerResult").textContent = "";
   document.getElementById("answerInput").style.display = "none";
@@ -136,6 +154,7 @@ function generateGameQuestion() {
   document.getElementById("checkBtn").style.display = "none";
   document.getElementById("graphPanel").style.display = "none";
   document.getElementById("graphCheckBtn").style.display = "none";
+  document.getElementById("resultSummary").textContent = "";
 
   let type = currentGameQuestionType;
   if (type === "mix") {
@@ -194,7 +213,6 @@ function generateAlgebraQuestion() {
   document.getElementById("answerResult").textContent = "";
   document.getElementById("checkBtn").style.display = "inline";
 
-  // グラフ表示
   document.getElementById("graphPanel").style.display = "block";
   document.getElementById("graphProblem").textContent =
     `この一次関数 ${getFunctionString(currentA, currentB)} のグラフです。`;
@@ -271,6 +289,7 @@ function checkAnswer() {
       resultDiv.textContent = "正解！ +10点";
       resultDiv.style.color = "green";
       score += 10;
+      correctCount++;
       document.getElementById("score").textContent = score;
       if (score % 50 === 0) levelUp();
     } else {
@@ -300,6 +319,7 @@ function checkAnswer() {
       resultDiv.textContent = "正解！ +10点";
       resultDiv.style.color = "green";
       score += 10;
+      correctCount++;
       document.getElementById("score").textContent = score;
       if (score % 50 === 0) levelUp();
     } else {
@@ -473,7 +493,7 @@ function checkGraphAnswer() {
   const resultDiv = document.getElementById("graphAnswerResult");
   if (userSlope === graphA && userIntercept === graphB) {
     resultDiv.textContent = "正解！ +10点";
-    resultDiv.style.color = "green";
+    correctCount++;
     score += 10;
     document.getElementById("score").textContent = score;
     if (score % 50 === 0) levelUp();
